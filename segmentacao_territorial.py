@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore")
 # LEITURA DA BASE
 # =========================
 
-base = pd.read_excel("data/Base.xlsx")
+base = pd.read_excel("data/Projetos/Base.xlsx")
 
 if "Municipio" not in base.columns:
     raise ValueError("A base precisa conter a coluna 'Municipio'.")
@@ -42,7 +42,7 @@ base_pca = base_pca.apply(pd.to_numeric, errors="coerce")
 if base_pca.isna().sum().sum() > 0:
     raise ValueError("Existem valores ausentes. Trate antes de rodar o modelo.")
 
-base_pca_pad = base_pca.apply(zscore)
+base_pca_pad = base_pca.apply(zscore, ddof=1)
 
 # =========================
 # MATRIZ DE CORRELAÇÃO
@@ -72,6 +72,19 @@ print("p-valor:", round(p_value,6))
 fa = FactorAnalyzer(n_factors=3, method="principal", rotation="varimax")
 fa.fit(base_pca_pad)
 
+# =========================
+# VARIÂNCIA EXPLICADA
+# =========================
+
+variance = fa.get_factor_variance()
+
+tabela_variancia = pd.DataFrame(variance).T
+tabela_variancia.columns = ["Autovalor", "Variância Explicada", "Variância Acumulada"]
+tabela_variancia.index = ["Fator 1", "Fator 2", "Fator 3"]
+
+print("\nVariância por Fator")
+print(tabela_variancia)
+
 # Cargas fatoriais
 loadings = pd.DataFrame(
     fa.loadings_,
@@ -92,7 +105,7 @@ fatores = pd.DataFrame(
 # CLUSTERIZAÇÃO
 # =========================
 
-fatores_pad = fatores.apply(zscore)
+fatores_pad = fatores.apply(zscore, ddof=1)
 
 # Elbow
 inercia = []
